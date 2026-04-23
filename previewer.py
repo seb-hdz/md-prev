@@ -51,7 +51,9 @@ class Previewer:
             return
         try:
             html_body = self.renderer.render(path)
-            full_html = self.renderer.wrap_in_template(html_body, self.base_css)
+            base_url = f"file://{os.path.dirname(os.path.abspath(path))}/"
+            print(f"[reload_preview] Resolviendo rutas relativas con base_url: {base_url}")
+            full_html = self.renderer.wrap_in_template(html_body, self.base_css, base_url=base_url)
 
             # Escapar para inyección segura en un template literal de JS
             escaped = full_html.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$')
@@ -103,9 +105,10 @@ class Previewer:
             thread.start()
 
         # Crear la ventana inicial
+        blank_url = f"file://{os.path.abspath('assets/blank.html')}"
         self.window = webview.create_window(
             'MD-Prev',
-            html='<div style="font-family: -apple-system, sans-serif; padding: 60px; text-align: center; color: #888;"><h2>Selecciona un archivo .md en el Finder</h2></div>',
+            url=blank_url,
             width=800,
             height=900,
             on_top=self.on_top_state,

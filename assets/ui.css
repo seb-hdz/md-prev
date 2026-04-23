@@ -152,6 +152,7 @@
 #search-bar {
     display: flex;
     align-items: center;
+    box-sizing: border-box;
     width: 40px;
     height: 40px;
     border-radius: 20px;
@@ -185,6 +186,7 @@
 
 #search-bar.expanded {
     width: 380px;
+    max-width: calc(100vw - 98px);
     cursor: default;
     padding: 0 10px 0 12px;
     gap: 6px;

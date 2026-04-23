@@ -136,14 +136,18 @@ class MarkdownRenderer:
             logger.exception(f'[renderer] Error al renderizar {filepath}')
             return f'<h1>Error al renderizar</h1><pre>{e}</pre>'
 
-    def wrap_in_template(self, html_content, css_content):
+    def wrap_in_template(self, html_content, css_content, base_url=""):
         """
         Ensambla el HTML final inyectando contenido y assets en el template.
         Todos los archivos se embeben inline (no hay servidor HTTP).
         """
+        if base_url:
+            logger.debug(f'[renderer] Inyectando base_url para imágenes/enlaces: {base_url}')
+        
         mermaid_js = assets_manager.get_mermaid_script()
 
         html = self._template
+        html = html.replace('{%base_url%}', base_url)
         html = html.replace('{%base_css%}', css_content)
         html = html.replace('{%pygments_css%}', self.get_pygments_css())
         html = html.replace('{%ui_css%}', self._ui_css)
