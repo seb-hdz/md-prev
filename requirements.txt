@@ -1,0 +1,4 @@
+markdown==3.10.2
+pygments==2.20.0
+pywebview==6.2.1
+certifi>=2024.0.0

@@ -1,0 +1,367 @@
+/* ============================================
+   ui.css — Floating toolbar & glass button styles
+   ============================================ */
+
+/* --- Blur gradients --- */
+.blur-gradient {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 120px;
+    /* Doble de alto para ocultar el borde duro del backdrop-filter */
+    z-index: 9000;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    background: rgba(30, 30, 30, 0.7);
+    /* Se oscurece hacia el color de fondo */
+    /* Forzar aceleración por hardware para que el mask funcione bien en Safari */
+    transform: translateZ(0);
+}
+
+.blur-gradient.top {
+    top: -8px;
+    /* Subir un poco para cubrir bien el inicio */
+    padding-top: 8px;
+    mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 70%, transparent 100%);
+}
+
+.blur-gradient.bottom {
+    bottom: -8px;
+    padding-bottom: 8px;
+    mask-image: linear-gradient(to top, black 0%, black 20%, transparent 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, black 0%, black 20%, transparent 70%, transparent 100%);
+}
+
+/* --- Toolbar container --- */
+#toolbar {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9999;
+}
+
+/* --- Shared glass button base --- */
+.glass-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: rgba(10, 132, 255, 0.45);
+    color: #fff;
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow:
+        0 2px 10px rgba(10, 132, 255, 0),
+        0 1px 3px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition:
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.15s ease,
+        width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+    -webkit-user-select: none;
+    flex-shrink: 0;
+}
+
+.glass-btn:hover {
+    transform: scale(1.08);
+    background: rgba(10, 132, 255, 0.62);
+    box-shadow:
+        0 4px 16px rgba(10, 132, 255, 0.38),
+        0 1px 4px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.glass-btn:active {
+    transform: scale(0.97);
+}
+
+.glass-btn svg {
+    flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: light) {
+    .glass-btn {
+        background: rgba(255, 59, 48, 0.18);
+        color: #ff3b30;
+    }
+
+    .glass-btn:hover {
+        background: rgba(255, 59, 48, 0.28);
+        box-shadow:
+            0 4px 16px rgba(255, 59, 48, 0.25),
+            0 1px 4px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+}
+
+/* --- Pin button states --- */
+#pin-btn .pin-icon {
+    padding-top: 2px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#pin-btn.unpinned {
+    background: rgba(120, 120, 128, 0.18);
+    color: rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 1px 6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#pin-btn.unpinned:hover {
+    background: rgba(120, 120, 128, 0.28);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: scale(1.08);
+}
+
+#pin-btn.unpinned .pin-icon {
+    transform: rotate(45deg);
+}
+
+@media (prefers-color-scheme: light) {
+    #pin-btn.unpinned {
+        background: rgba(120, 120, 128, 0.14);
+        color: rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* --- Search container --- */
+#search-container {
+    position: relative;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+/* --- Search bar (morphs from circle to pill) --- */
+#search-bar {
+    display: flex;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(120, 120, 128, 0.18);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.12),
+        0 1px 6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition:
+        width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        color 0.25s ease;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#search-bar:hover:not(.expanded) {
+    transform: scale(1.08);
+    background: rgba(120, 120, 128, 0.28);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.18),
+        0 4px 12px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+#search-bar.expanded {
+    width: 380px;
+    cursor: default;
+    padding: 0 10px 0 12px;
+    gap: 6px;
+    background: rgba(10, 132, 255, 0.45);
+    color: #fff;
+    box-shadow:
+        0 2px 10px rgba(10, 132, 255, 0.3),
+        0 1px 3px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+@media (prefers-color-scheme: light) {
+    #search-bar {
+        background: rgba(128, 120, 120, 0.14);
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    #search-bar:hover:not(.expanded) {
+        background: rgba(128, 120, 120, 0.22);
+    }
+
+    #search-bar.expanded {
+        background: #fff;
+        color: #ff3b30;
+        box-shadow:
+            0 2px 12px rgba(255, 59, 48, 0.2),
+            0 1px 3px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .blur-gradient {
+        background: rgba(255, 255, 255, 0.7);
+        /* Se aclara en modo claro */
+    }
+}
+
+/* --- Search icon --- */
+#search-bar .search-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    /* Center when collapsed */
+    margin-left: 12px;
+    transition: margin 0.3s ease;
+}
+
+#search-bar.expanded .search-icon {
+    margin: 0;
+}
+
+/* --- Search input --- */
+#search-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    padding: 0;
+    width: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease 0.1s;
+}
+
+#search-bar.expanded #search-input {
+    width: auto;
+    opacity: 1;
+}
+
+#search-input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+@media (prefers-color-scheme: light) {
+    #search-bar.expanded {
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    #search-input {
+        color: #1a1a1a;
+    }
+
+    #search-input::placeholder {
+        color: rgba(0, 0, 0, 0.35);
+    }
+}
+
+/* --- Search controls (counter, nav, close) --- */
+.search-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease 0.15s;
+    flex-shrink: 0;
+}
+
+#search-bar.expanded .search-controls {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#search-counter {
+    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    color: rgba(255, 255, 255, 0.65);
+    padding: 0 4px;
+    min-width: 30px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+@media (prefers-color-scheme: light) {
+    #search-counter {
+        color: rgba(255, 59, 48, 0.8);
+    }
+}
+
+.search-nav {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    transition: background 0.15s ease;
+}
+
+.search-nav:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.search-nav:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-color-scheme: light) {
+    .search-nav {
+        background: rgba(255, 59, 48, 0.12);
+        color: #ff3b30;
+    }
+
+    .search-nav:hover {
+        background: rgba(255, 59, 48, 0.22);
+    }
+}
+
+/* --- Search highlights --- */
+mark.search-highlight {
+    background: rgba(255, 214, 0, 0.35);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+mark.search-highlight.current {
+    background: rgba(255, 149, 0, 0.6);
+    outline: 2px solid rgba(255, 149, 0, 0.4);
+    outline-offset: 1px;
+}
+
+@media (prefers-color-scheme: light) {
+    mark.search-highlight {
+        background: rgba(255, 204, 0, 0.4);
+    }
+
+    mark.search-highlight.current {
+        background: rgba(255, 149, 0, 0.55);
+        outline-color: rgba(255, 149, 0, 0.35);
+    }
+}
