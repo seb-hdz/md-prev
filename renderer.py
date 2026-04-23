@@ -1,3 +1,20 @@
+import sys
+import importlib.util
+import html.parser
+import os
+
+# --- Parche para compatibilidad de Markdown con py2app / Python 3.13 ---
+# Evita el error "AttributeError: 'NoneType' object has no attribute 'loader'"
+# al intentar cargar html.parser dentro del bundle.
+_orig_find_spec = importlib.util.find_spec
+def _patched_find_spec(name, package=None):
+    spec = _orig_find_spec(name, package)
+    if name == 'html.parser' and spec is None:
+        return importlib.util.spec_from_loader(name, html.parser.__loader__)
+    return spec
+importlib.util.find_spec = _patched_find_spec
+# -----------------------------------------------------------------------
+
 import re
 import markdown
 from pygments.formatters import HtmlFormatter
@@ -14,11 +31,12 @@ MERMAID_FENCE_RE = re.compile(
     re.MULTILINE | re.DOTALL
 )
 
-# Placeholder único para reinsertar los bloques mermaid después del parse
+import paths_util
+
 _MERMAID_PLACEHOLDER = '<!-- __MERMAID_{idx}__ -->'
 _MERMAID_PLACEHOLDER_RE = re.compile(r'<!-- __MERMAID_(\d+)__ -->')
 
-ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+ASSETS_DIR = os.path.join(paths_util.get_base_path(), 'assets')
 
 
 def _read_asset(filename):

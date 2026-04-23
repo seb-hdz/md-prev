@@ -19,12 +19,17 @@ import json
 import logging
 import ssl
 import certifi
+import paths_util
 
 logger = logging.getLogger(__name__)
 
-ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+APP_SUPPORT_DIR = paths_util.get_app_support_path()
+ASSETS_DIR = os.path.join(APP_SUPPORT_DIR, 'assets')
 MERMAID_JS_PATH = os.path.join(ASSETS_DIR, 'mermaid.min.js')
 MERMAID_VERSION_PATH = os.path.join(ASSETS_DIR, 'mermaid.version')
+
+BUNDLED_ASSETS_DIR = os.path.join(paths_util.get_base_path(), 'assets')
+BUNDLED_MERMAID_JS_PATH = os.path.join(BUNDLED_ASSETS_DIR, 'mermaid.min.js')
 
 JSDELIVR_RESOLVE_URL = 'https://data.jsdelivr.com/v1/packages/npm/mermaid/resolved?specifier=%5E11'
 JSDELIVR_DOWNLOAD_URL = 'https://cdn.jsdelivr.net/npm/mermaid@{version}/dist/mermaid.min.js'
@@ -101,10 +106,16 @@ def start_background_update_check() -> None:
 def get_mermaid_script() -> str:
     """
     Devuelve el contenido de mermaid.min.js para ser embebido inline.
+    Prioriza la versión en Application Support, con fallback al bundle.
     Si el archivo local no existe, devuelve un script vacío y loggea un warning.
     """
-    if not os.path.exists(MERMAID_JS_PATH):
+    if os.path.exists(MERMAID_JS_PATH):
+        path_to_load = MERMAID_JS_PATH
+    elif os.path.exists(BUNDLED_MERMAID_JS_PATH):
+        path_to_load = BUNDLED_MERMAID_JS_PATH
+    else:
         logger.warning('[assets_manager] mermaid.min.js no encontrado en assets/. Ejecuta el setup.')
         return '/* mermaid.min.js no encontrado */'
-    with open(MERMAID_JS_PATH, 'r', encoding='utf-8') as f:
+        
+    with open(path_to_load, 'r', encoding='utf-8') as f:
         return f.read()

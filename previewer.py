@@ -3,6 +3,7 @@ import subprocess
 import time
 import threading
 import os
+import paths_util
 import assets_manager
 from renderer import MarkdownRenderer
 
@@ -15,7 +16,8 @@ class Previewer:
         self.on_top_state = True   # estado inicial: siempre al frente
 
         # Cargar estilos base
-        with open('styles.css', 'r') as f:
+        styles_path = os.path.join(paths_util.get_base_path(), 'styles.css')
+        with open(styles_path, 'r') as f:
             self.base_css = f.read()
 
     def get_finder_selection(self):
@@ -36,6 +38,23 @@ class Previewer:
     def update_content(self):
         """Hilo de polling para detectar cambios en la selección del Finder."""
         while self.is_running:
+            # --- Actualización Dinámica del Ícono del Dock ---
+            try:
+                from AppKit import NSApplication, NSImage, NSAppearanceNameDarkAqua
+                app = NSApplication.sharedApplication()
+                appearance = app.effectiveAppearance().name()
+                is_dark = NSAppearanceNameDarkAqua in appearance
+                
+                icon_name = 'dark-x1024.png' if is_dark else 'light-x1024.png'
+                icon_path = os.path.join(paths_util.get_base_path(), 'assets', icon_name)
+                
+                if os.path.exists(icon_path):
+                    img = NSImage.alloc().initWithContentsOfFile_(icon_path)
+                    app.setApplicationIconImage_(img)
+            except ImportError:
+                pass # Ignorar si no estamos en macOS o falta pyobjc
+            # ------------------------------------------------
+
             current_path = self.get_finder_selection()
 
             if current_path != self.last_path:
@@ -83,29 +102,11 @@ class Previewer:
         def on_webview_ready():
             """Callback ejecutado por pywebview cuando la ventana está lista.
             Aquí sí es seguro arrancar el hilo de polling."""
-            
-            # Cambiar el icono del Dock en macOS
-            try:
-                from AppKit import NSApplication, NSImage, NSAppearanceNameDarkAqua
-                app = NSApplication.sharedApplication()
-                # Detectar si el sistema está en modo oscuro
-                appearance = app.effectiveAppearance().name()
-                is_dark = NSAppearanceNameDarkAqua in appearance
-                
-                icon_name = 'dark-x1024.png' if is_dark else 'light-x1024.png'
-                icon_path = os.path.abspath(os.path.join('assets', icon_name))
-                
-                if os.path.exists(icon_path):
-                    img = NSImage.alloc().initWithContentsOfFile_(icon_path)
-                    app.setApplicationIconImage_(img)
-            except ImportError:
-                pass # Ignorar si no estamos en macOS o falta pyobjc
-                
             thread = threading.Thread(target=self.update_content, daemon=True)
             thread.start()
 
         # Crear la ventana inicial
-        blank_url = f"file://{os.path.abspath('assets/blank.html')}"
+        blank_url = f"file://{os.path.join(paths_util.get_base_path(), 'assets', 'blank.html')}"
         self.window = webview.create_window(
             'MD-Prev',
             url=blank_url,
@@ -131,8 +132,6 @@ if __name__ == '__main__':
         format='%(asctime)s [%(name)s] %(levelname)s: %(message)s',
         datefmt='%H:%M:%S'
     )
-    # Asegurarse de que estamos en el directorio correcto
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     # Verificar actualizaciones de Mermaid.js en background (no bloquea el arranque)
     assets_manager.start_background_update_check()
     app = Previewer()
