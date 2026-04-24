@@ -119,11 +119,11 @@ class Previewer:
             thread = threading.Thread(target=self.update_content, daemon=True)
             thread.start()
 
-        # Crear la ventana inicial
-        blank_url = f"file://{os.path.join(paths_util.get_base_path(), 'assets', 'blank.html')}"
+        # Crear la ventana inicial usando el template (esto incluye el toolbar de Pin/Search)
+        blank_html = self.renderer.render_blank(self.base_css)
         self.window = webview.create_window(
             'MD-Prev',
-            url=blank_url,
+            html=blank_html,
             width=800,
             height=900,
             on_top=self.on_top_state,

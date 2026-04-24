@@ -1,1 +1,40 @@
-<div class="blank-state"><h2>Selecciona un archivo .md en el Finder</h2></div>
+<div class="blank-state-wrapper">
+    <div class="icon">📄</div>
+    <h2>Listo para previsualizar</h2>
+    <p>Selecciona un archivo Markdown en el Finder para comenzar.</p>
+</div>
+
+<style>
+    .blank-state-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: calc(100vh - 100px);
+        text-align: center;
+        padding: 40px;
+    }
+
+    .icon {
+        font-size: 64px;
+        margin-bottom: 24px;
+        display: block;
+        opacity: 0.8;
+        color: var(--accent, #007aff);
+    }
+
+    h2 {
+        font-weight: 600;
+        font-size: 24px;
+        margin: 0 0 12px 0;
+        letter-spacing: -0.5px;
+    }
+
+    p {
+        color: var(--secondary, #888888);
+        font-size: 16px;
+        line-height: 1.5;
+        max-width: 300px;
+        margin: 0;
+    }
+</style>

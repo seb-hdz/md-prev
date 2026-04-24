@@ -228,3 +228,13 @@ class MarkdownRenderer:
         html = html.replace('{%content%}', html_content)
 
         return html
+    def render_blank(self, css: str) -> str:
+        """Renderiza el estado inicial vacío usando el template principal."""
+        blank_path = os.path.join(paths_util.get_base_path(), 'assets', 'blank.html')
+        try:
+            with open(blank_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            content = f'<div class="blank-state"><h2>Error cargando blank.html: {e}</h2></div>'
+        
+        return self.wrap_in_template(content, css)

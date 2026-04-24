@@ -66,7 +66,8 @@ def _get_remote_version(url: str) -> str:
             data = json.loads(resp.read().decode())
             return data['version']
     except Exception as e:
-        logger.warning(f'[assets_manager] Error al obtener versión remota: {e}')
+        # Usamos debug en lugar de warning porque el fallback ya maneja esto sin problemas
+        logger.debug(f'[assets_manager] No se pudo consultar la versión remota: {e}')
         return ''
 
 
@@ -96,7 +97,7 @@ def _update_asset(name: str, resolve_url: str, download_url_tmpl: str, target_pa
     try:
         remote = _get_remote_version(resolve_url)
         if not remote:
-            logger.warning(f'[assets_manager] No se pudo resolver la versión para {name}. Usando fallback: {fallback_version}')
+            logger.info(f'[assets_manager] Usando versión de respaldo para {name}: {fallback_version}')
             remote = fallback_version
 
         local = _get_local_version(version_path)
