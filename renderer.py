@@ -18,9 +18,11 @@ importlib.util.find_spec = _patched_find_spec
 import re
 import markdown
 from pygments.formatters import HtmlFormatter
-import os
 import logging
 import assets_manager
+from pathlib import Path
+import base64
+import mimetypes
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +38,8 @@ import paths_util
 _MERMAID_PLACEHOLDER = '<!-- __MERMAID_{idx}__ -->'
 _MERMAID_PLACEHOLDER_RE = re.compile(r'<!-- __MERMAID_(\d+)__ -->')
 
-_LATEX_PLACEHOLDER = '<!-- __LATEX_{idx}__ -->'
-_LATEX_PLACEHOLDER_RE = re.compile(r'<!-- __LATEX_(\d+)__ -->')
+_LATEX_PLACEHOLDER = 'KLATEX{idx}K'
+_LATEX_PLACEHOLDER_RE = re.compile(r'KLATEX(\d+)K')
 
 # Regex para bloques LaTeX
 # 1. Display math: \[ ... \] o $$ ... $$
@@ -68,7 +70,7 @@ class MarkdownRenderer:
             'codehilite',
             'tables',
             'toc',
-            'nl2br'
+            'sane_lists'
         ]
         self.extension_configs = {
             'codehilite': {
@@ -166,6 +168,79 @@ class MarkdownRenderer:
 
         return _LATEX_PLACEHOLDER_RE.sub(replacer, html)
 
+    def _fix_list_indentation(self, text: str) -> str:
+        """
+        Convierte indentación de 2 espacios a 4 espacios para listas,
+        ya que Python-Markdown requiere 4 espacios para anidamiento.
+        """
+        lines = text.split('\n')
+        new_lines = []
+        for line in lines:
+            # Match: espacios iniciales (al menos 2) + marcador de lista + espacio
+            match = re.match(r'^(\s{2,})([-*+]|\d+\.)\s', line)
+            if match:
+                indent = match.group(1)
+                marker_and_rest = line[len(indent):]
+                # Duplicamos la sangría (2->4, 4->8, etc) para asegurar anidamiento
+                new_indent = ' ' * (len(indent) * 2)
+                new_lines.append(new_indent + marker_and_rest)
+            else:
+                new_lines.append(line)
+        return '\n'.join(new_lines)
+
+    def _get_data_uri(self, filepath: str) -> str:
+        """Convierte un archivo local en una Data URI (base64)."""
+        try:
+            if not os.path.exists(filepath):
+                return None
+            
+            mime_type, _ = mimetypes.guess_type(filepath)
+            if not mime_type:
+                mime_type = 'application/octet-stream'
+            
+            with open(filepath, 'rb') as f:
+                data = f.read()
+                b64 = base64.b64encode(data).decode('utf-8')
+                return f'data:{mime_type};base64,{b64}'
+        except Exception as e:
+            logger.error(f'[renderer] Error al convertir a Data URI: {filepath} -> {e}')
+            return None
+
+    def _resolve_relative_paths(self, html: str, base_dir: str) -> str:
+        """
+        Encuentra atributos src="..." y href="..." con rutas relativas.
+        - Para src (imágenes), intenta convertir a Data URI para evitar bloqueos de seguridad.
+        - Para href (enlaces), convierte en URIs absolutas file://.
+        """
+        def replacer(match):
+            attr = match.group(1)
+            path = match.group(2)
+            
+            # Ignorar rutas absolutas, URIs y anclas
+            if path.startswith(('http://', 'https://', 'file://', '/', '#')):
+                return match.group(0)
+            
+            # Resolver ruta absoluta en el sistema de archivos
+            abs_path = os.path.abspath(os.path.join(base_dir, path))
+            
+            # Si es un atributo src (usualmente imágenes), intentamos Data URI
+            if attr == 'src':
+                data_uri = self._get_data_uri(abs_path)
+                if data_uri:
+                    logger.debug(f'[renderer] Imagen convertida a Data URI: {path}')
+                    print(f"[renderer] Imagen convertida a Data URI: {path}")
+                    return f'{attr}="{data_uri}"'
+
+            # Si falla la conversión o es un href, usamos file:// absoluta
+            abs_uri = Path(abs_path).as_uri()
+            logger.debug(f'[renderer] Ruta resuelta (file://): {path} -> {abs_uri}')
+            print(f"[renderer] URL resuelta para {attr}: {abs_uri}")
+            return f'{attr}="{abs_uri}"'
+
+        # Buscamos src="..." y href="..." de forma segura
+        new_html = re.sub(r'(src|href)="([^"]+)"', replacer, html)
+        return new_html
+
     # ------------------------------------------------------------------
     # Render principal
     # ------------------------------------------------------------------
@@ -175,13 +250,15 @@ class MarkdownRenderer:
             logger.warning(f'[renderer] Archivo no encontrado: {filepath}')
             return '<h1>Archivo no encontrado</h1>'
 
+        base_dir = os.path.dirname(os.path.abspath(filepath))
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 raw = f.read()
 
             logger.debug(f'[renderer] Procesando: {filepath} ({len(raw)} chars)')
 
-            # 1. Extraer bloques mermaid y LaTeX antes de que el parser los toque
+            # 1. Limpiar indentación de listas y extraer bloques mermaid/LaTeX
+            raw = self._fix_list_indentation(raw)
             prepped, diagrams = self._extract_mermaid_blocks(raw)
             prepped, formulas = self._extract_latex_blocks(prepped)
 
@@ -198,6 +275,9 @@ class MarkdownRenderer:
             if diagrams:
                 html = self._reinsert_mermaid(html, diagrams)
 
+            # 4. Resolver rutas relativas a absolutas para asegurar visibilidad de imágenes
+            html = self._resolve_relative_paths(html, base_dir)
+
             logger.debug(f'[renderer] HTML generado: {len(html)} chars')
             return html
 
@@ -205,19 +285,15 @@ class MarkdownRenderer:
             logger.exception(f'[renderer] Error al renderizar {filepath}')
             return f'<h1>Error al renderizar</h1><pre>{e}</pre>'
 
-    def wrap_in_template(self, html_content, css_content, base_url=""):
+    def wrap_in_template(self, html_content, css_content):
         """
         Ensambla el HTML final inyectando contenido y assets en el template.
         Todos los archivos se embeben inline (no hay servidor HTTP).
         """
-        if base_url:
-            logger.debug(f'[renderer] Inyectando base_url para imágenes/enlaces: {base_url}')
-        
         mermaid_js = assets_manager.get_mermaid_script()
         mathjax_js = assets_manager.get_mathjax_script()
 
         html = self._template
-        html = html.replace('{%base_url%}', base_url)
         html = html.replace('{%base_css%}', css_content)
         html = html.replace('{%pygments_css%}', self.get_pygments_css())
         html = html.replace('{%ui_css%}', self._ui_css)

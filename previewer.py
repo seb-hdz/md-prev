@@ -3,6 +3,7 @@ import subprocess
 import time
 import threading
 import os
+from pathlib import Path
 import paths_util
 import assets_manager
 from renderer import MarkdownRenderer
@@ -83,15 +84,15 @@ class Previewer:
             return
         try:
             html_body = self.renderer.render(path)
-            base_url = f"file://{os.path.dirname(os.path.abspath(path))}/"
-            print(f"[reload_preview] Resolviendo rutas relativas con base_url: {base_url}")
-            full_html = self.renderer.wrap_in_template(html_body, self.base_css, base_url=base_url)
+            full_html = self.renderer.wrap_in_template(html_body, self.base_css)
 
-            # Escapar para inyección segura en JS usando json.dumps (maneja backslashes y comillas)
-            import json
-            escaped_html = json.dumps(full_html)
-            js = f"document.open(); document.write({escaped_html}); document.close();"
-            self.window.evaluate_js(js)
+            # Calcular el base_uri para darle al documento permisos de origen file://
+            # Esto es vital para que WebKit permita cargar imágenes locales.
+            base_uri = Path(path).parent.absolute().as_uri() + '/'
+            
+            print(f"--- RELOAD PREVIEW ---")
+            print(f"[previewer] Inyectando HTML con origin base_uri: {base_uri}")
+            self.window.load_html(full_html, base_uri=base_uri)
 
             filename = os.path.basename(path)
             self.window.set_title(f"MD-Prev — {filename}")

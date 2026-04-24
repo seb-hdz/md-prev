@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <base href="{%base_url%}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         {%base_css%}
@@ -19,9 +18,8 @@
     <script>{%mermaid_js%}</script>
     <script>
         window.MathJax = {
-            loader: { load: ['[tex]/ams', '[tex]/textmacros'] },
             tex: {
-                packages: {'[+]': ['ams', 'textmacros']},
+                packages: {'[+]': ['ams', 'textmacros', 'physics', 'color']},
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
                 processEscapes: true,
