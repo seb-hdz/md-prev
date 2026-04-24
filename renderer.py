@@ -36,6 +36,21 @@ import paths_util
 _MERMAID_PLACEHOLDER = '<!-- __MERMAID_{idx}__ -->'
 _MERMAID_PLACEHOLDER_RE = re.compile(r'<!-- __MERMAID_(\d+)__ -->')
 
+_LATEX_PLACEHOLDER = '<!-- __LATEX_{idx}__ -->'
+_LATEX_PLACEHOLDER_RE = re.compile(r'<!-- __LATEX_(\d+)__ -->')
+
+# Regex para bloques LaTeX
+# 1. Display math: \[ ... \] o $$ ... $$
+LATEX_DISPLAY_RE = re.compile(
+    r'(\\\[.*?\\\])|(\$\$.*?\$\$)',
+    re.MULTILINE | re.DOTALL
+)
+# 2. Inline math: \( ... \) o $ ... $
+LATEX_INLINE_RE = re.compile(
+    r'(\\\(.*?\\\))|(\$.+?\$)',
+    re.MULTILINE | re.DOTALL
+)
+
 ASSETS_DIR = os.path.join(paths_util.get_base_path(), 'assets')
 
 
@@ -119,6 +134,39 @@ class MarkdownRenderer:
         return _MERMAID_PLACEHOLDER_RE.sub(replacer, html)
 
     # ------------------------------------------------------------------
+    # Pre/post processing de bloques LaTeX
+    # ------------------------------------------------------------------
+
+    def _extract_latex_blocks(self, text: str):
+        """
+        Extrae bloques LaTeX del markdown y los reemplaza por placeholders.
+        Devuelve (texto_sin_latex, lista_de_formulas).
+        """
+        formulas = []
+
+        def replacer(match):
+            idx = len(formulas)
+            # Guardamos la fórmula completa con sus delimitadores originales
+            full_match = match.group(0)
+            formulas.append(full_match)
+            logger.debug(f'[renderer] Extraído bloque LaTeX #{idx}')
+            return _LATEX_PLACEHOLDER.format(idx=idx)
+
+        # Primero extraemos display math (más específico) y luego inline
+        text = LATEX_DISPLAY_RE.sub(replacer, text)
+        text = LATEX_INLINE_RE.sub(replacer, text)
+        
+        return text, formulas
+
+    def _reinsert_latex(self, html: str, formulas: list) -> str:
+        """Sustituye los placeholders LaTeX por su contenido original."""
+        def replacer(match):
+            idx = int(match.group(1))
+            return formulas[idx]
+
+        return _LATEX_PLACEHOLDER_RE.sub(replacer, html)
+
+    # ------------------------------------------------------------------
     # Render principal
     # ------------------------------------------------------------------
 
@@ -133,8 +181,9 @@ class MarkdownRenderer:
 
             logger.debug(f'[renderer] Procesando: {filepath} ({len(raw)} chars)')
 
-            # 1. Extraer bloques mermaid antes de que codehilite los toque
+            # 1. Extraer bloques mermaid y LaTeX antes de que el parser los toque
             prepped, diagrams = self._extract_mermaid_blocks(raw)
+            prepped, formulas = self._extract_latex_blocks(prepped)
 
             # 2. Parsear el resto del markdown normalmente
             html = markdown.markdown(
@@ -143,7 +192,9 @@ class MarkdownRenderer:
                 extension_configs=self.extension_configs
             )
 
-            # 3. Reinsertar los diagramas como <div class="mermaid">
+            # 3. Reinsertar los diagramas y fórmulas
+            if formulas:
+                html = self._reinsert_latex(html, formulas)
             if diagrams:
                 html = self._reinsert_mermaid(html, diagrams)
 
@@ -163,6 +214,7 @@ class MarkdownRenderer:
             logger.debug(f'[renderer] Inyectando base_url para imágenes/enlaces: {base_url}')
         
         mermaid_js = assets_manager.get_mermaid_script()
+        mathjax_js = assets_manager.get_mathjax_script()
 
         html = self._template
         html = html.replace('{%base_url%}', base_url)
@@ -170,6 +222,7 @@ class MarkdownRenderer:
         html = html.replace('{%pygments_css%}', self.get_pygments_css())
         html = html.replace('{%ui_css%}', self._ui_css)
         html = html.replace('{%mermaid_js%}', mermaid_js)
+        html = html.replace('{%mathjax_js%}', mathjax_js)
         html = html.replace('{%glass_js%}', self._glass_js)
         html = html.replace('{%ui_js%}', self._ui_js)
         html = html.replace('{%content%}', html_content)

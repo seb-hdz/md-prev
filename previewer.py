@@ -87,9 +87,10 @@ class Previewer:
             print(f"[reload_preview] Resolviendo rutas relativas con base_url: {base_url}")
             full_html = self.renderer.wrap_in_template(html_body, self.base_css, base_url=base_url)
 
-            # Escapar para inyección segura en un template literal de JS
-            escaped = full_html.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$')
-            js = f"document.open(); document.write(`{escaped}`); document.close();"
+            # Escapar para inyección segura en JS usando json.dumps (maneja backslashes y comillas)
+            import json
+            escaped_html = json.dumps(full_html)
+            js = f"document.open(); document.write({escaped_html}); document.close();"
             self.window.evaluate_js(js)
 
             filename = os.path.basename(path)

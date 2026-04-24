@@ -17,6 +17,22 @@
         {%ui_css%}
     </style>
     <script>{%mermaid_js%}</script>
+    <script>
+        window.MathJax = {
+            loader: { load: ['[tex]/ams', '[tex]/textmacros'] },
+            tex: {
+                packages: {'[+]': ['ams', 'textmacros']},
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script>{%mathjax_js%}</script>
     <script>{%glass_js%}</script>
 </head>
 <body>
