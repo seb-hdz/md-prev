@@ -55,6 +55,15 @@ class Previewer:
                         img = NSImage.alloc().initWithContentsOfFile_(icon_path)
                         app.setApplicationIconImage_(img)
                         self.current_icon_name = icon_name
+                    
+                    # Notificar al webview para actualizar Mermaid y otros estilos
+                    if self.window:
+                        is_dark_js = "true" if is_dark else "false"
+                        self.window.evaluate_js(f"if(window.updateTheme) window.updateTheme({is_dark_js});")
+                        
+                        # Si hay un archivo cargado, refrescarlo para asegurar coherencia total
+                        if self.last_path:
+                            self.reload_preview(self.last_path)
             except ImportError:
                 pass # Ignorar si no estamos en macOS o falta pyobjc
             # ------------------------------------------------

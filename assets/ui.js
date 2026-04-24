@@ -15,10 +15,10 @@
     // Mermaid initialization
     // ----------------------------------------------------------------
 
-    function initMermaid() {
+    function initMermaid(forceTheme) {
         if (typeof mermaid === 'undefined') return;
 
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = forceTheme !== undefined ? forceTheme : window.matchMedia('(prefers-color-scheme: dark)').matches;
         mermaid.initialize({
             startOnLoad: false,
             theme: isDark ? 'dark' : 'default',
@@ -28,11 +28,21 @@
         const diagrams = document.querySelectorAll('div.mermaid');
         console.log('[md-prev] Bloques mermaid en DOM:', diagrams.length);
         if (diagrams.length > 0) {
+            // Re-renderizar todos los diagramas
+            // Nota: Mermaid necesita que el contenido original esté presente para re-renderizar.
+            // En nuestro caso, como renderizamos desde Python, es mejor forzar un reload completo si el tema cambia radicalmente,
+            // pero esto ayuda a que nuevos diagramas se carguen con el tema correcto.
             mermaid.run({ nodes: diagrams })
                 .then(() => console.log('[md-prev] Mermaid renderizado OK'))
                 .catch(err => console.error('[md-prev] Error en Mermaid:', err));
         }
     }
+
+    // Exponer función para que Python pueda llamarla
+    window.updateTheme = function(isDark) {
+        console.log('[md-prev] Actualizando tema via Python:', isDark ? 'dark' : 'light');
+        initMermaid(isDark);
+    };
 
     // ----------------------------------------------------------------
     // Pin button

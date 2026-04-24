@@ -125,3 +125,15 @@ hr {
     border-top: 1px solid var(--border-color);
     margin: 2em 0;
 }
+
+.blank-state {
+    padding: 60px;
+    text-align: center;
+    color: #8e8e93;
+}
+
+@media (prefers-color-scheme: dark) {
+    .blank-state {
+        color: #727276;
+    }
+}

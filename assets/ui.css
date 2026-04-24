@@ -308,38 +308,90 @@
     }
 }
 
-.search-nav {
-    width: 24px;
-    height: 24px;
+.search-pill {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border: none;
     background: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.8);
-    border-radius: 6px;
+    border-radius: 12px;
+    padding: 2px 6px;
+    margin-left: 4px;
+}
+
+.pill-sep {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 10px;
+    margin: 0 4px;
+    user-select: none;
+}
+
+.search-pill button {
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
-    font-size: 12px;
-    padding: 0;
-    transition: background 0.15s ease;
+    padding: 4px 6px;
+    border-radius: 100%;
+    transition: all 0.15s ease;
 }
 
-.search-nav:hover {
-    background: rgba(255, 255, 255, 0.22);
+.search-pill button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }
 
-.search-nav:active {
-    background: rgba(255, 255, 255, 0.08);
+#search-close {
+    font-size: 13px;
+    padding: 4px 8px;
+}
+
+/* Glow effect when hovering close button */
+.search-controls {
+    transition: background 0.3s ease;
+    border-radius: 14px;
+    padding-right: 2px;
+}
+
+.search-controls:has(#search-close:hover) {
+    background: linear-gradient(to left, rgba(255, 59, 48, 0.15) 0%, transparent 60%);
+}
+
+#search-close:hover {
+    background: rgba(255, 59, 48, 0.2);
+    color: #ff3b30;
+    box-shadow: 0 0 8px rgba(255, 59, 48, 0.2);
+}
+
+/* Prevent SVG "shaking" on dynamic background changes */
+#search-bar svg {
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 @media (prefers-color-scheme: light) {
-    .search-nav {
-        background: rgba(255, 59, 48, 0.12);
-        color: #ff3b30;
+    .search-controls:has(#search-close:hover) {
+        background: linear-gradient(to left, rgba(255, 59, 48, 0.1) 0%, transparent 50%);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .search-pill {
+        background: rgba(0, 0, 0, 0.06);
     }
 
-    .search-nav:hover {
-        background: rgba(255, 59, 48, 0.22);
+    .pill-sep {
+        color: rgba(0, 0, 0, 0.15);
+    }
+
+    .search-pill button {
+        color: rgba(0, 0, 0, 0.65);
+    }
+
+    .search-pill button:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: #000;
     }
 }
 
