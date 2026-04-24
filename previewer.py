@@ -19,6 +19,8 @@ class Previewer:
         styles_path = os.path.join(paths_util.get_base_path(), 'styles.css')
         with open(styles_path, 'r') as f:
             self.base_css = f.read()
+        
+        self.current_icon_name = None  # Cache para no actualizar el Dock innecesariamente
 
     def get_finder_selection(self):
         """Usa AppleScript para obtener el archivo seleccionado en el Finder."""
@@ -45,12 +47,14 @@ class Previewer:
                 appearance = app.effectiveAppearance().name()
                 is_dark = NSAppearanceNameDarkAqua in appearance
                 
-                icon_name = 'dark-x1024.png' if is_dark else 'light-x1024.png'
-                icon_path = os.path.join(paths_util.get_base_path(), 'assets', icon_name)
+                icon_name = 'dark-x1024-pdd.png' if is_dark else 'light-x1024-pdd.png'
                 
-                if os.path.exists(icon_path):
-                    img = NSImage.alloc().initWithContentsOfFile_(icon_path)
-                    app.setApplicationIconImage_(img)
+                if icon_name != self.current_icon_name:
+                    icon_path = os.path.join(paths_util.get_base_path(), 'assets', icon_name)
+                    if os.path.exists(icon_path):
+                        img = NSImage.alloc().initWithContentsOfFile_(icon_path)
+                        app.setApplicationIconImage_(img)
+                        self.current_icon_name = icon_name
             except ImportError:
                 pass # Ignorar si no estamos en macOS o falta pyobjc
             # ------------------------------------------------
