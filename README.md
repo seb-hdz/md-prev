@@ -18,6 +18,7 @@
 - **Auto-adapts to your macOS system theme** (Light/Dark mode) including dynamic Dock icon swapping.
 - **Interactive Search Bar**: A floating button that morphs into a full search pill. **Also works with `Cmd+F`**.
 - **Live text highlighting** with keyboard navigation (`Enter`/`Shift+Enter` or Up/Down arrows, `Esc` to close).
+- **Notes & Annotations**: Select any text in the rendered Markdown to reveal a floating action button (FAB). Click it to add persistent notes anchored via the W3C `TextQuoteSelector` standard with SQLite storage and frosted-glass modal UI.
 - **"Always on Top" Pin:** Toggle a floating window state to keep your reference material visible while typing in another app.
 - **Modular:** Clean separation of concerns (HTML templates, CSS styles, JavaScript logic, and Python rendering orchestrator).
 
@@ -82,6 +83,41 @@ python3 previewer.py
 2. Select any `.md` file in your **macOS Finder**.
 3. Watch the previewer render it instantly.
 4. You can use the **Pin** button to keep it on top, or use the **Search** button to find text within your document.
+
+---
+
+## 📦 Packaging & Building (`.app` & `.dmg`)
+
+MD-Prev includes a robust build script ([`build.sh`](file:///Users/sebastian/Desktop/Proyectos/Python/md-prev/build.sh)) to bundle the application as a standalone macOS `.app` inside the `build/` folder and generate a distributable `.dmg` installer with an `/Applications` drag-and-drop symlink.
+
+### Prerequisites for Building
+
+1. Ensure `py2app` is installed in your virtual environment:
+   ```bash
+   pip install py2app
+   ```
+2. *(Optional)* For official Dock icon padding (824px canvas), install `GraphicsMagick`:
+   ```bash
+   brew install graphicsmagick
+   ```
+   *(If GraphicsMagick is not detected, the build script automatically falls back to native macOS `sips`).*
+
+### Build Commands
+
+Make sure the script has execution permissions:
+
+```bash
+chmod +x build.sh
+```
+
+| Command | Action | Output Location |
+| :--- | :--- | :--- |
+| `./build.sh app` | Compiles only the standalone `.app` bundle | `build/MD-Prev.app` |
+| `./build.sh dmg` | Packages the `.app` into a compressed DMG installer | `build/MD-Prev-v1.0.0.dmg` & `./MD-Prev-v1.0.0.dmg` |
+| `./build.sh` *(or `./build.sh all`)* | Full pipeline: generates both `.app` in `build/` and `.dmg` | `build/MD-Prev.app` & `build/MD-Prev-v1.0.0.dmg` |
+| `./build.sh clean` | Removes all temporary artifacts and build directories | *Cleans `build/`, `dist/`, `*.dmg`* |
+
+---
 
 ## 🛠 Tech Stack
 

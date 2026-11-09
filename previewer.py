@@ -3,10 +3,13 @@ import subprocess
 import time
 import threading
 import os
+import uuid
+import json
 from pathlib import Path
 import paths_util
 import assets_manager
 from renderer import MarkdownRenderer
+from notes_manager import NotesManager
 
 class Previewer:
     def __init__(self):
@@ -15,6 +18,14 @@ class Previewer:
         self.window = None
         self.is_running = True
         self.on_top_state = True   # estado inicial: siempre al frente
+
+        # Notes system
+        self.notes_manager = NotesManager()
+        self._view_token = None          # opaque token identifying current render
+        self._view_filepath = None       # filepath associated with current token
+        self._token_lock = threading.Lock()
+        self._edit_in_progress = False    # True while user is editing a note
+        self._pending_reload = None       # Deferred reload path
 
         # Cargar estilos base
         styles_path = os.path.join(paths_util.get_base_path(), 'styles.css')
@@ -78,13 +89,39 @@ class Previewer:
 
             time.sleep(0.5)
 
+    def _generate_view_token(self, filepath: str) -> str:
+        """Generate an opaque token that binds a render to a filepath."""
+        token = uuid.uuid4().hex[:16]
+        with self._token_lock:
+            self._view_token = token
+            self._view_filepath = filepath
+            self._edit_in_progress = False
+        return token
+
+    def _resolve_token(self, view_token: str) -> str | None:
+        """Return the filepath for *view_token*, or None if expired."""
+        with self._token_lock:
+            if view_token == self._view_token:
+                return self._view_filepath
+        return None
+
     def reload_preview(self, path):
         """Renderiza el nuevo archivo y lo inyecta en el webview via JS."""
         if not self.window:
             return
+
+        # If user is editing a note, defer the reload
+        with self._token_lock:
+            if self._edit_in_progress:
+                self._pending_reload = path
+                return
+
         try:
             html_body = self.renderer.render(path)
             full_html = self.renderer.wrap_in_template(html_body, self.base_css)
+
+            # Generate a new view token for this render
+            view_token = self._generate_view_token(path)
 
             # Calcular el base_uri para darle al documento permisos de origen file://
             # Esto es vital para que WebKit permita cargar imágenes locales.
@@ -96,6 +133,18 @@ class Previewer:
 
             filename = os.path.basename(path)
             self.window.set_title(f"MD-Prev — {filename}")
+
+            # After load_html, inject the view token so JS can request notes
+            # We use evaluate_js with a small delay to allow the DOM to settle
+            def inject_token():
+                time.sleep(0.15)
+                if self.window:
+                    escaped = json.dumps(view_token)
+                    self.window.evaluate_js(
+                        f'if(window.notesOnFileLoaded) {{ window.notesOnFileLoaded({escaped}); }} else {{ window._pendingNotesToken = {escaped}; }}'
+                    )
+            threading.Thread(target=inject_token, daemon=True).start()
+
         except Exception as e:
             print(f"[reload_preview] Error: {e}")
 
@@ -113,6 +162,84 @@ class Previewer:
             self.on_top_state = not self.on_top_state
             self.window.on_top = self.on_top_state
             return self.on_top_state
+
+        # ------ Notes bridge API ------
+
+        def notes_list(view_token):
+            """Return all notes for the file associated with *view_token*."""
+            filepath = self._resolve_token(view_token)
+            if filepath is None:
+                return {'error': 'expired_token'}
+            try:
+                notes = self.notes_manager.list_notes(filepath)
+                return {'ok': True, 'notes': notes}
+            except Exception as e:
+                print(f"[notes_list] Error: {e}")
+                return {'error': str(e)}
+
+        def notes_create(view_token, note_id, body, selector):
+            """Create a note for the current file."""
+            filepath = self._resolve_token(view_token)
+            if filepath is None:
+                return {'error': 'expired_token'}
+            try:
+                if isinstance(selector, str):
+                    selector = json.loads(selector)
+                note = self.notes_manager.create_note(filepath, body, selector, note_id)
+                return {'ok': True, 'note': note}
+            except Exception as e:
+                print(f"[notes_create] Error: {e}")
+                return {'error': str(e)}
+
+        def notes_update(view_token, note_id, body=None, selector=None):
+            """Update an existing note's body and/or selector."""
+            filepath = self._resolve_token(view_token)
+            if filepath is None:
+                return {'error': 'expired_token'}
+            try:
+                if isinstance(selector, str):
+                    selector = json.loads(selector)
+                note = self.notes_manager.update_note(
+                    filepath, note_id, body=body, selector=selector
+                )
+                return {'ok': True, 'note': note}
+            except Exception as e:
+                print(f"[notes_update] Error: {e}")
+                return {'error': str(e)}
+
+        def notes_delete(view_token, note_id):
+            """Delete a note by ID."""
+            filepath = self._resolve_token(view_token)
+            if filepath is None:
+                return {'error': 'expired_token'}
+            try:
+                deleted = self.notes_manager.delete_note(filepath, note_id)
+                return {'ok': True, 'deleted': deleted}
+            except Exception as e:
+                print(f"[notes_delete] Error: {e}")
+                return {'error': str(e)}
+
+        def notes_begin_edit(view_token):
+            """Signal that user started editing a note (defers file reloads)."""
+            with self._token_lock:
+                if view_token == self._view_token:
+                    self._edit_in_progress = True
+                    self._pending_reload = None
+                    return {'ok': True}
+            return {'error': 'expired_token'}
+
+        def notes_end_edit(view_token):
+            """Signal that user finished editing a note.
+            If a file reload was deferred, it is applied now."""
+            pending = None
+            with self._token_lock:
+                if view_token == self._view_token:
+                    self._edit_in_progress = False
+                    pending = getattr(self, '_pending_reload', None)
+                    self._pending_reload = None
+            if pending:
+                self.reload_preview(pending)
+            return {'ok': True}
 
         def on_webview_ready():
             """Callback ejecutado por pywebview cuando la ventana está lista.
@@ -134,6 +261,12 @@ class Previewer:
         # Exponer funciones al JS
         self.window.expose(close_window)
         self.window.expose(toggle_on_top)
+        self.window.expose(notes_list)
+        self.window.expose(notes_create)
+        self.window.expose(notes_update)
+        self.window.expose(notes_delete)
+        self.window.expose(notes_begin_edit)
+        self.window.expose(notes_end_edit)
 
         # webview.start(func=on_webview_ready) garantiza que el callback se ejecuta
         # DESPUÉS de que el motor WebKit esté completamente listo

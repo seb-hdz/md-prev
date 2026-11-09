@@ -1,0 +1,526 @@
+/* ============================================
+   notes.css — Note annotation UI styles
+   ============================================ */
+
+/* --- Note FAB (floating action button) --- */
+#note-fab {
+    position: fixed;
+    z-index: 9998;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: rgba(10, 132, 255, 0.55);
+    color: #fff;
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow:
+        0 2px 12px rgba(10, 132, 255, 0.35),
+        0 1px 3px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: scale(0.85);
+    opacity: 0;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.2s ease;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#note-fab.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+#note-fab:hover {
+    background: rgba(10, 132, 255, 0.75);
+    transform: scale(1.12);
+    box-shadow:
+        0 4px 18px rgba(10, 132, 255, 0.45),
+        0 1px 4px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+#note-fab:active {
+    transform: scale(0.95);
+}
+
+#note-fab svg {
+    flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: light) {
+    #note-fab {
+        background: rgba(255, 149, 0, 0.65);
+        color: #fff;
+    }
+    #note-fab:hover {
+        background: rgba(255, 149, 0, 0.85);
+        box-shadow:
+            0 4px 18px rgba(255, 149, 0, 0.35),
+            0 1px 4px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+}
+
+/* --- Note Dialog --- */
+#note-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+}
+
+.note-dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: noteDialogFadeIn 0.2s ease forwards;
+}
+
+.note-dialog-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.92);
+    width: 380px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 80px);
+    border-radius: 16px;
+    background: rgba(44, 44, 46, 0.92);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.4),
+        0 4px 24px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    animation: noteDialogPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s forwards;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-content {
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow:
+            0 24px 80px rgba(0, 0, 0, 0.18),
+            0 4px 24px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.08);
+    }
+}
+
+.note-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 8px;
+}
+
+.note-dialog-title {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-title {
+        color: #1a1a1a;
+    }
+}
+
+.note-dialog-close {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.note-dialog-close:hover {
+    background: rgba(255, 59, 48, 0.2);
+    color: #ff3b30;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-close {
+        background: rgba(0, 0, 0, 0.06);
+        color: rgba(0, 0, 0, 0.4);
+    }
+    .note-dialog-close:hover {
+        background: rgba(255, 59, 48, 0.15);
+        color: #ff3b30;
+    }
+}
+
+.note-dialog-quote {
+    padding: 0 16px;
+    margin-bottom: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.4;
+    max-height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.note-dialog-quote::before {
+    content: '\201C';
+}
+
+.note-dialog-quote::after {
+    content: '\201D';
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-quote {
+        color: rgba(0, 0, 0, 0.4);
+    }
+}
+
+.note-dialog-input {
+    margin: 0 16px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    color: #e3e3e3;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 60px;
+    max-height: 200px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-dialog-input:focus {
+    border-color: rgba(10, 132, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+}
+
+.note-dialog-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-input {
+        background: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.1);
+        color: #1a1a1a;
+    }
+    .note-dialog-input:focus {
+        border-color: rgba(255, 149, 0, 0.5);
+        box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.12);
+    }
+    .note-dialog-input::placeholder {
+        color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+.note-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 14px;
+    gap: 8px;
+}
+
+.note-dialog-hint {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-hint {
+        color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+.note-dialog-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.note-dialog-cancel,
+.note-dialog-save {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.note-dialog-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.note-dialog-cancel:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.note-dialog-save {
+    background: rgba(10, 132, 255, 0.65);
+    color: #fff;
+}
+
+.note-dialog-save:hover {
+    background: rgba(10, 132, 255, 0.85);
+}
+
+.note-dialog-save:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-dialog-cancel {
+        background: rgba(0, 0, 0, 0.06);
+        color: rgba(0, 0, 0, 0.6);
+    }
+    .note-dialog-cancel:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: #000;
+    }
+    .note-dialog-save {
+        background: rgba(255, 149, 0, 0.75);
+    }
+    .note-dialog-save:hover {
+        background: rgba(255, 149, 0, 0.9);
+    }
+}
+
+/* --- Note highlights in text --- */
+mark.md-note-highlight {
+    background-color: rgba(255, 214, 10, 0.22);
+    border-bottom: 1.5px solid rgba(255, 214, 10, 0.7);
+    border-radius: 2px;
+    padding: 1px 0;
+    cursor: pointer;
+    color: inherit;
+    transition: background-color 0.2s ease;
+}
+
+mark.md-note-highlight:hover {
+    background-color: rgba(255, 214, 10, 0.4);
+}
+
+@media (prefers-color-scheme: light) {
+    mark.md-note-highlight {
+        background-color: rgba(255, 179, 0, 0.18);
+        border-bottom-color: rgba(255, 149, 0, 0.6);
+    }
+    mark.md-note-highlight:hover {
+        background-color: rgba(255, 179, 0, 0.35);
+    }
+}
+
+/* --- Note Inspector Popover --- */
+#note-inspector {
+    position: fixed;
+    z-index: 10000;
+}
+
+.note-inspector-content {
+    width: 300px;
+    max-width: calc(100vw - 32px);
+    border-radius: 12px;
+    background: rgba(44, 44, 46, 0.92);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.35),
+        0 2px 12px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 14px;
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+    animation: noteInspectorIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-inspector-content {
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow:
+            0 12px 40px rgba(0, 0, 0, 0.12),
+            0 2px 12px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.08);
+    }
+}
+
+.note-inspector-quote {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 11px;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.3;
+    margin-bottom: 6px;
+    max-height: 32px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.note-inspector-quote::before { content: '\201C'; }
+.note-inspector-quote::after { content: '\201D'; }
+
+@media (prefers-color-scheme: light) {
+    .note-inspector-quote {
+        color: rgba(0, 0, 0, 0.35);
+    }
+}
+
+.note-inspector-body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    color: #e3e3e3;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-inspector-body {
+        color: #1a1a1a;
+    }
+}
+
+.note-inspector-meta {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 8px;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-inspector-meta {
+        color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+.note-inspector-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.note-inspector-edit,
+.note-inspector-delete {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.note-inspector-edit {
+    background: rgba(10, 132, 255, 0.18);
+    color: rgba(10, 132, 255, 0.9);
+}
+
+.note-inspector-edit:hover {
+    background: rgba(10, 132, 255, 0.3);
+}
+
+.note-inspector-delete {
+    background: rgba(255, 59, 48, 0.12);
+    color: rgba(255, 59, 48, 0.8);
+}
+
+.note-inspector-delete:hover {
+    background: rgba(255, 59, 48, 0.25);
+    color: #ff3b30;
+}
+
+@media (prefers-color-scheme: light) {
+    .note-inspector-edit {
+        background: rgba(255, 149, 0, 0.12);
+        color: rgba(200, 120, 0, 0.9);
+    }
+    .note-inspector-edit:hover {
+        background: rgba(255, 149, 0, 0.22);
+    }
+    .note-inspector-delete {
+        background: rgba(255, 59, 48, 0.08);
+        color: rgba(255, 59, 48, 0.7);
+    }
+    .note-inspector-delete:hover {
+        background: rgba(255, 59, 48, 0.18);
+    }
+}
+
+/* --- Animations --- */
+@keyframes noteDialogFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes noteDialogPopIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes noteInspectorIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+

@@ -37,3 +37,43 @@ build/
 
 # Logs
 *.log
+
+# Xcode & Swift (Native Quick Look host & build caches)
+build/
+DerivedData/
+DerivedData*/
+.derived/
+.derivedData/
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Swift / Clang module caches, indexes & intermediate artifacts
+*.noindex/
+*.indexstore/
+*.indexstore
+*.pcm
+*.swiftmodule
+*.swiftdoc
+*.swiftinterface
+*.swiftsourceinfo
+*.dia
+*.hmap
+XCBuildData/
+*.xcbuilddata
+SwiftExplicitPrecompiledModules/
+ExplicitPrecompiledModules/
+
+# macOS / iOS build outputs & debug symbols
+*.app
+*.appex
+*.framework
+*.dSYM/
+*.dSYM.zip
+*.ipa

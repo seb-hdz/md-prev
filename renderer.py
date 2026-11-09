@@ -84,6 +84,8 @@ class MarkdownRenderer:
         self._ui_css = _read_asset('ui.css')
         self._ui_js = _read_asset('ui.js')
         self._glass_js = _read_asset('liquid-glass.js')
+        self._notes_css = _read_asset('notes.css')
+        self._notes_js = _read_asset('notes.js')
         logger.debug('[renderer] Assets cargados desde disco.')
 
     def get_pygments_css(self):
@@ -297,10 +299,12 @@ class MarkdownRenderer:
         html = html.replace('{%base_css%}', css_content)
         html = html.replace('{%pygments_css%}', self.get_pygments_css())
         html = html.replace('{%ui_css%}', self._ui_css)
+        html = html.replace('{%notes_css%}', self._notes_css)
         html = html.replace('{%mermaid_js%}', mermaid_js)
         html = html.replace('{%mathjax_js%}', mathjax_js)
         html = html.replace('{%glass_js%}', self._glass_js)
         html = html.replace('{%ui_js%}', self._ui_js)
+        html = html.replace('{%notes_js%}', self._notes_js)
         html = html.replace('{%content%}', html_content)
 
         return html
