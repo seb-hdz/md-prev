@@ -88,7 +88,7 @@ python3 previewer.py
 
 ## 📦 Packaging & Building (`.app` & `.dmg`)
 
-MD-Prev includes a robust build script ([`build.sh`](file:///Users/sebastian/Desktop/Proyectos/Python/md-prev/build.sh)) to bundle the application as a standalone macOS `.app` inside the `build/` folder and generate a distributable `.dmg` installer with an `/Applications` drag-and-drop symlink.
+MD-Prev includes a robust build script `build.sh` to bundle the application as a standalone macOS `.app` inside the `build/` folder and generate a distributable `.dmg` installer with an `/Applications` drag-and-drop symlink.
 
 ### Prerequisites for Building
 
